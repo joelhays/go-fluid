@@ -47,6 +47,27 @@ func (f *Fluid) Simulate(dt float32) {
 	f.simulateDensity(dt)
 }
 
+func (f *Fluid) AddDensity(x, y int, val float32) {
+	if v, ok := f.densityFieldPrev.Get(x, y); ok {
+		newVal := v.Value + val
+		if newVal > 1 {
+			newVal = 1
+		}
+		fluid.densityFieldPrev.Set(x, y, newVal)
+	}
+}
+
+func (f *Fluid) AddVelocity(x, y int, xval, yval float32) {
+	if xv, ok := fluid.xVelocitiesPrev.Get(x, y); ok {
+		newxval := xv.Value + xval
+		if yv, ok := fluid.yVelocitiesPrev.Get(x, y); ok {
+			newyval := yv.Value + yval
+			fluid.xVelocitiesPrev.Set(x, y, newxval)
+			fluid.yVelocitiesPrev.Set(x, y, newyval)
+		}
+	}
+}
+
 func (f *Fluid) simulateVelocity(dt float32) {
 	var viscosity float32 = 0.025
 	f.diffuse(dt, f.xVelocities, f.xVelocitiesPrev, viscosity)

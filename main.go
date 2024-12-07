@@ -94,37 +94,25 @@ func handleMouseDrag() {
 	y := int(mouseWorldPos.Y) / cellSize
 
 	if r.IsMouseButtonDown(r.MouseButtonRight) {
-		if xv, ok := fluid.xVelocitiesPrev.Get(x, y); ok {
-			if yv, ok := fluid.yVelocitiesPrev.Get(x, y); ok {
-				adjustedVector := r.Vector2Add(r.Vector2{X: xv.Value, Y: yv.Value}, mouseDelta)
-				val := r.Vector2ClampValue(adjustedVector, -halfCellSize, halfCellSize)
-				fluid.xVelocitiesPrev.Set(x, y, val.X)
-				fluid.yVelocitiesPrev.Set(x, y, val.Y)
-
-				for x1 := x - int(brushRadius); x1 <= x+int(brushRadius); x1++ {
-					for y1 := y - int(brushRadius); y1 <= y+int(brushRadius); y1++ {
-						if int(x) == int(x1) && int(y) == int(y1) {
-							continue
-						}
-						fluid.xVelocitiesPrev.Set(int(x1), int(y1), val.X)
-						fluid.yVelocitiesPrev.Set(int(x1), int(y1), val.Y)
-					}
+		val := r.Vector2ClampValue(mouseDelta, -halfCellSize, halfCellSize)
+		fluid.AddVelocity(x, y, val.X, val.Y)
+		for x1 := x - int(brushRadius); x1 <= x+int(brushRadius); x1++ {
+			for y1 := y - int(brushRadius); y1 <= y+int(brushRadius); y1++ {
+				if int(x) == int(x1) && int(y) == int(y1) {
+					continue
 				}
+				fluid.AddVelocity(x1, y1, val.X, val.Y)
 			}
 		}
 	}
 	if r.IsMouseButtonDown(r.MouseButtonLeft) {
-		if v, ok := fluid.densityFieldPrev.Get(x, y); ok {
-			val := r.Clamp(v.Value+0.5, 0, 1.0)
-			fluid.densityFieldPrev.Set(x, y, val)
-
-			for x1 := x - int(brushRadius); x1 <= x+int(brushRadius); x1++ {
-				for y1 := y - int(brushRadius); y1 <= y+int(brushRadius); y1++ {
-					if int(x) == int(x1) && int(y) == int(y1) {
-						continue
-					}
-					fluid.densityFieldPrev.Set(int(x1), int(y1), val)
+		fluid.AddDensity(x, y, .1)
+		for x1 := x - int(brushRadius); x1 <= x+int(brushRadius); x1++ {
+			for y1 := y - int(brushRadius); y1 <= y+int(brushRadius); y1++ {
+				if int(x) == int(x1) && int(y) == int(y1) {
+					continue
 				}
+				fluid.AddDensity(int(x1), int(y1), .1)
 			}
 		}
 	}
