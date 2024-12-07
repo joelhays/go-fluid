@@ -17,11 +17,9 @@ const cameraZoomIncrement float32 = 0.125
 var camera = r.Camera2D{Zoom: 1.0}
 
 // simulation state
-// var fluid *Fluid
 var fluid2 *Fluid2
 
 func init() {
-	// fluid = NewFluid()
 	fluid2 = NewFluid2()
 }
 
@@ -30,13 +28,12 @@ func main() {
 	r.InitWindow(windowWidth, windowHeight, "Golang Fluid Simulation")
 	defer r.CloseWindow()
 
-	// r.SetTargetFPS(120)
+	r.SetTargetFPS(120)
 
 	for !r.WindowShouldClose() {
 		// handlePanAndZoom()
 		handleMouseDrag()
 
-		// fluid.Simulate()
 		fluid2.Simulate(r.GetFrameTime())
 
 		r.BeginDrawing()
@@ -97,23 +94,6 @@ func handleMouseDrag() {
 	y := int(mouseWorldPos.Y) / cellSize
 
 	if r.IsMouseButtonDown(r.MouseButtonRight) {
-		// add the mouse vector to the velocity vectors
-		// if v, ok := fluid.velocityField.Get(x, y); ok {
-		// 	adjustedVector := r.Vector2Add(v.Value, mouseDelta)
-		// 	val := r.Vector2ClampValue(adjustedVector, -halfCellSize, halfCellSize)
-		// 	fluid.velocityField.Set(x, y, val)
-		//
-		// 	for x1 := x - int(brushRadius); x1 <= x+int(brushRadius); x1++ {
-		// 		for y1 := y - int(brushRadius); y1 <= y+int(brushRadius); y1++ {
-		// 			if int(x) == int(x1) && int(y) == int(y1) {
-		// 				continue
-		// 			}
-		// 			fluid.velocityField.Set(int(x1), int(y1), val)
-		// 		}
-		// 	}
-		//
-		// }
-
 		if xv, ok := fluid2.xVelocitiesPrev.Get(x, y); ok {
 			if yv, ok := fluid2.yVelocitiesPrev.Get(x, y); ok {
 				adjustedVector := r.Vector2Add(r.Vector2{X: xv.Value, Y: yv.Value}, mouseDelta)
@@ -173,19 +153,6 @@ func drawVelocityField() {
 		return
 	}
 
-	// for x := range fluid.velocityField.Width {
-	// 	for y := range fluid.velocityField.Height {
-	// 		vector, _ := fluid.velocityField.Get(x, y)
-	//
-	// 		pos := r.NewVector2(float32(x*cellSize+halfCellSize), float32(y*cellSize+halfCellSize))
-	// 		dir := r.NewVector2(vector.Value.X, vector.Value.Y)
-	// 		end := r.Vector2Add(pos, dir)
-	//
-	// 		r.DrawLineV(pos, end, r.Red)
-	// 		r.DrawCircleV(end, 1, r.Red)
-	// 	}
-	// }
-
 	for x := range fluid2.xVelocities.Width {
 		for y := range fluid2.xVelocities.Height {
 			xv, _ := fluid2.xVelocities.Get(x, y)
@@ -212,7 +179,6 @@ func drawDensityField() {
 			pos := r.NewVector2(float32(x*cellSize), float32(y*cellSize))
 			size := r.NewVector2(cellSize, cellSize)
 
-			// baseColor := r.ColorToHSV(r.Blue)
 			baseColor := r.ColorToHSV(fluidColor)
 			topLeftColor := r.ColorFromHSV(baseColor.X, baseColor.Y, baseColor.Z*density.Value)
 			bottomLeftColor := r.ColorFromHSV(baseColor.X, baseColor.Y, baseColor.Z*density2.Value)
