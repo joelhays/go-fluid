@@ -6,7 +6,7 @@ import (
 	r "github.com/gen2brain/raylib-go/raylib"
 )
 
-type Fluid2 struct {
+type Fluid struct {
 	densityField     *Grid2[float32]
 	densityFieldPrev *Grid2[float32]
 	xVelocities      *Grid2[float32]
@@ -15,8 +15,8 @@ type Fluid2 struct {
 	yVelocitiesPrev  *Grid2[float32]
 }
 
-func NewFluid2() *Fluid2 {
-	fluid := &Fluid2{
+func NewFluid() *Fluid {
+	fluid := &Fluid{
 		densityField:     NewGrid2[float32](gridWidth, gridHeight),
 		densityFieldPrev: NewGrid2[float32](gridWidth, gridHeight),
 		xVelocities:      NewGrid2[float32](gridWidth, gridHeight),
@@ -44,12 +44,12 @@ func NewFluid2() *Fluid2 {
 	return fluid
 }
 
-func (f *Fluid2) Simulate(dt float32) {
+func (f *Fluid) Simulate(dt float32) {
 	f.simulateVelocity(dt)
 	f.simulateDensity(dt)
 }
 
-func (f *Fluid2) simulateVelocity(dt float32) {
+func (f *Fluid) simulateVelocity(dt float32) {
 	var viscosity float32 = 0.025
 	f.diffuse(dt, f.xVelocities, f.xVelocitiesPrev, viscosity)
 	f.diffuse(dt, f.yVelocities, f.yVelocitiesPrev, viscosity)
@@ -62,7 +62,7 @@ func (f *Fluid2) simulateVelocity(dt float32) {
 	f.swapState()
 }
 
-func (f *Fluid2) simulateDensity(dt float32) {
+func (f *Fluid) simulateDensity(dt float32) {
 	var diffusionRate float32 = 0.5
 	f.advect(dt, f.densityField, f.densityFieldPrev, f.xVelocities, f.yVelocities)
 	f.swapState()
@@ -70,13 +70,13 @@ func (f *Fluid2) simulateDensity(dt float32) {
 	f.swapState()
 }
 
-func (f *Fluid2) swapState() {
+func (f *Fluid) swapState() {
 	f.densityField, f.densityFieldPrev = f.densityFieldPrev, f.densityField
 	f.xVelocities, f.xVelocitiesPrev = f.xVelocitiesPrev, f.xVelocities
 	f.yVelocities, f.yVelocitiesPrev = f.yVelocitiesPrev, f.yVelocities
 }
 
-func (f *Fluid2) advect(dt float32, grid *Grid2[float32], gridPrev *Grid2[float32], xVelocities, yVelocities *Grid2[float32]) {
+func (f *Fluid) advect(dt float32, grid *Grid2[float32], gridPrev *Grid2[float32], xVelocities, yVelocities *Grid2[float32]) {
 	for i := range grid.Width {
 		for j := range grid.Height {
 
@@ -100,7 +100,7 @@ func (f *Fluid2) advect(dt float32, grid *Grid2[float32], gridPrev *Grid2[float3
 	}
 }
 
-func (f *Fluid2) diffuse(dt float32, grid *Grid2[float32], gridPrev *Grid2[float32], diffusionRate float32) {
+func (f *Fluid) diffuse(dt float32, grid *Grid2[float32], gridPrev *Grid2[float32], diffusionRate float32) {
 	// diffuse the density field
 	// high density cells diffuse to low density cells
 	var relaxationSteps int = 20
@@ -127,10 +127,10 @@ func (f *Fluid2) diffuse(dt float32, grid *Grid2[float32], gridPrev *Grid2[float
 	}
 }
 
-func (f *Fluid2) project(grid *Grid2[float32], gridPrev *Grid2[float32], xVelocities, yVelocities *Grid2[float32]) {
+func (f *Fluid) project(grid *Grid2[float32], gridPrev *Grid2[float32], xVelocities, yVelocities *Grid2[float32]) {
 }
 
-func (f *Fluid2) bilinearInterpolate(x, y float32, grid *Grid2[float32]) float32 {
+func (f *Fluid) bilinearInterpolate(x, y float32, grid *Grid2[float32]) float32 {
 	// truncate x and y and get the indexes for the 4 adjacent cells at this position
 	x0 := int(x)
 	y0 := int(y)

@@ -17,10 +17,10 @@ const cameraZoomIncrement float32 = 0.125
 var camera = r.Camera2D{Zoom: 1.0}
 
 // simulation state
-var fluid2 *Fluid2
+var fluid *Fluid
 
 func init() {
-	fluid2 = NewFluid2()
+	fluid = NewFluid()
 }
 
 func main() {
@@ -34,7 +34,7 @@ func main() {
 		// handlePanAndZoom()
 		handleMouseDrag()
 
-		fluid2.Simulate(r.GetFrameTime())
+		fluid.Simulate(r.GetFrameTime())
 
 		r.BeginDrawing()
 		{
@@ -94,36 +94,36 @@ func handleMouseDrag() {
 	y := int(mouseWorldPos.Y) / cellSize
 
 	if r.IsMouseButtonDown(r.MouseButtonRight) {
-		if xv, ok := fluid2.xVelocitiesPrev.Get(x, y); ok {
-			if yv, ok := fluid2.yVelocitiesPrev.Get(x, y); ok {
+		if xv, ok := fluid.xVelocitiesPrev.Get(x, y); ok {
+			if yv, ok := fluid.yVelocitiesPrev.Get(x, y); ok {
 				adjustedVector := r.Vector2Add(r.Vector2{X: xv.Value, Y: yv.Value}, mouseDelta)
 				val := r.Vector2ClampValue(adjustedVector, -halfCellSize, halfCellSize)
-				fluid2.xVelocitiesPrev.Set(x, y, val.X)
-				fluid2.yVelocitiesPrev.Set(x, y, val.Y)
+				fluid.xVelocitiesPrev.Set(x, y, val.X)
+				fluid.yVelocitiesPrev.Set(x, y, val.Y)
 
 				for x1 := x - int(brushRadius); x1 <= x+int(brushRadius); x1++ {
 					for y1 := y - int(brushRadius); y1 <= y+int(brushRadius); y1++ {
 						if int(x) == int(x1) && int(y) == int(y1) {
 							continue
 						}
-						fluid2.xVelocitiesPrev.Set(int(x1), int(y1), val.X)
-						fluid2.yVelocitiesPrev.Set(int(x1), int(y1), val.Y)
+						fluid.xVelocitiesPrev.Set(int(x1), int(y1), val.X)
+						fluid.yVelocitiesPrev.Set(int(x1), int(y1), val.Y)
 					}
 				}
 			}
 		}
 	}
 	if r.IsMouseButtonDown(r.MouseButtonLeft) {
-		if v, ok := fluid2.densityFieldPrev.Get(x, y); ok {
+		if v, ok := fluid.densityFieldPrev.Get(x, y); ok {
 			val := r.Clamp(v.Value+0.5, 0, 1.0)
-			fluid2.densityFieldPrev.Set(x, y, val)
+			fluid.densityFieldPrev.Set(x, y, val)
 
 			for x1 := x - int(brushRadius); x1 <= x+int(brushRadius); x1++ {
 				for y1 := y - int(brushRadius); y1 <= y+int(brushRadius); y1++ {
 					if int(x) == int(x1) && int(y) == int(y1) {
 						continue
 					}
-					fluid2.densityFieldPrev.Set(int(x1), int(y1), val)
+					fluid.densityFieldPrev.Set(int(x1), int(y1), val)
 				}
 			}
 		}
@@ -153,10 +153,10 @@ func drawVelocityField() {
 		return
 	}
 
-	for x := range fluid2.xVelocities.Width {
-		for y := range fluid2.xVelocities.Height {
-			xv, _ := fluid2.xVelocities.Get(x, y)
-			yv, _ := fluid2.yVelocities.Get(x, y)
+	for x := range fluid.xVelocities.Width {
+		for y := range fluid.xVelocities.Height {
+			xv, _ := fluid.xVelocities.Get(x, y)
+			yv, _ := fluid.yVelocities.Get(x, y)
 
 			pos := r.NewVector2(float32(x*cellSize+halfCellSize), float32(y*cellSize+halfCellSize))
 			dir := r.NewVector2(xv.Value, yv.Value)
@@ -169,12 +169,12 @@ func drawVelocityField() {
 }
 
 func drawDensityField() {
-	for x := range fluid2.densityField.Width {
-		for y := range fluid2.densityField.Height {
-			density, _ := fluid2.densityField.Get(x, y)
-			density1, _ := fluid2.densityField.Get(x+1, y)
-			density2, _ := fluid2.densityField.Get(x, y+1)
-			density3, _ := fluid2.densityField.Get(x+1, y+1)
+	for x := range fluid.densityField.Width {
+		for y := range fluid.densityField.Height {
+			density, _ := fluid.densityField.Get(x, y)
+			density1, _ := fluid.densityField.Get(x+1, y)
+			density2, _ := fluid.densityField.Get(x, y+1)
+			density3, _ := fluid.densityField.Get(x+1, y+1)
 
 			pos := r.NewVector2(float32(x*cellSize), float32(y*cellSize))
 			size := r.NewVector2(cellSize, cellSize)
