@@ -2,8 +2,6 @@ package main
 
 import (
 	"math/rand"
-
-	r "github.com/gen2brain/raylib-go/raylib"
 )
 
 type Fluid struct {
@@ -90,8 +88,17 @@ func (f *Fluid) advect(dt float32, grid *Grid2[float32], gridPrev *Grid2[float32
 			px := float32(i) - xv.Value*dt
 			py := float32(j) - yv.Value*dt
 
-			px = r.Clamp(px, 0.5, gridWidth+0.5)  // clamp x at the edges
-			py = r.Clamp(py, 0.5, gridHeight+0.5) // clamp y at the edges
+			if px < 0.5 {
+				px = 0.5
+			} else if px > gridWidth+0.5 {
+				px = gridWidth + 0.5
+			}
+
+			if py < 0.5 {
+				py = 0.5
+			} else if py > gridHeight+0.5 {
+				py = gridHeight + 0.5
+			}
 
 			val := f.bilinearInterpolate(px, py, gridPrev)
 
