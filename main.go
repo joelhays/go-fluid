@@ -48,7 +48,7 @@ func main() {
 		defer runtime.UnlockOSThread()
 	}
 
-	r.InitWindow(windowWidth+150, windowHeight, "Golang Fluid Simulation")
+	r.InitWindow(windowWidth+200, windowHeight, "Golang Fluid Simulation")
 	defer r.CloseWindow()
 
 	r.SetTargetFPS(120)
@@ -57,9 +57,13 @@ func main() {
 		// handlePanAndZoom()
 		handleMouseDrag()
 
+		if resetSimulation {
+			macFluid.Reset()
+		}
+
 		macFluid.DiffusionRate = diffusionRate
 		macFluid.Viscosity = viscosity
-		macFluid.Simulate(0.1) //r.GetFrameTime())
+		macFluid.Simulate(stepSize)
 
 		r.BeginDrawing()
 		{

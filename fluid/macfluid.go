@@ -44,6 +44,19 @@ func NewMACFluid(size int) *MACFluid {
 	return fluid
 }
 
+func (f *MACFluid) Reset() {
+	for x := 0; x < f.Size+2; x++ {
+		for y := 0; y < f.Size+2; y++ {
+			f.DensityField[x][y] = 0
+			f.densityFieldPrev[x][y] = 0
+			f.XVelocities[x][y] = 0
+			f.xVelocitiesPrev[x][y] = 0
+			f.YVelocities[x][y] = 0
+			f.yVelocitiesPrev[x][y] = 0
+		}
+	}
+}
+
 func (f *MACFluid) Simulate(dt float32) {
 	// for x := range len(f.xVelocitiesPrev) {
 	// 	for y := range len(f.xVelocitiesPrev[x]) {
