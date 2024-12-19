@@ -1,4 +1,4 @@
-package main
+package Fluid
 
 type GridCell[T any] struct {
 	X     int

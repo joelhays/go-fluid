@@ -8,4 +8,8 @@ test:
 build:
 		go build -o ./bin/app -v
 run: build
-		./bin/app $(ARGS)
+		./bin/app
+runprof: build
+		./bin/app --profile
+pprof:
+		go tool pprof -http=:8080 go-fluid.prof

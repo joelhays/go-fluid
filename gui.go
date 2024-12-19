@@ -8,7 +8,9 @@ import (
 var showVelocityField bool = false
 var showGrid bool = false
 var brushRadius int32 = 1
-var diffusionRate float32 = 0.5
+var diffusionRate float32 = 0.000025
+var viscosity float32 = 0.0001
+var force float32 = 5
 var fluidColor r.Color = r.Blue
 var prevRect *r.Rectangle = nil
 var panelRect *r.Rectangle = nil
@@ -19,7 +21,7 @@ func handleGui() {
 	var panelMargin float32 = 0
 	var panelWidth float32 = 150.0
 	var panelHeight float32 = windowHeight - panelMargin*2
-	var panelX float32 = windowWidth - panelWidth - panelMargin
+	var panelX float32 = windowWidth - panelMargin
 	panelRect = &r.Rectangle{X: panelX, Y: panelMargin, Width: panelWidth, Height: panelHeight}
 	rg.Panel(*panelRect, "Fluid Simulation")
 
@@ -32,6 +34,15 @@ func handleGui() {
 	rg.Line(getControlRect(), "Brush Radius")
 	brushRadius = rg.Spinner(getControlRect(), "", &brushRadius, 0, 5, false)
 
+	rg.Line(getControlRect(), "Diffusion Rate")
+	diffusionRate = rg.Slider(getControlRect(), "", "", diffusionRate, 0.0, 0.0001)
+
+	rg.Line(getControlRect(), "Viscosity")
+	viscosity = rg.Slider(getControlRect(), "", "", viscosity, 0.0, 0.005)
+
+	rg.Line(getControlRect(), "Force")
+	force = rg.Slider(getControlRect(), "", "", force, 1, 40)
+
 	rg.Line(getControlRect(), "Fluid Color")
 	colorRect := getControlRect()
 	colorRect.Height = 60
@@ -40,9 +51,6 @@ func handleGui() {
 	prevRect.Y += 30
 
 	fluidColor = rg.ColorPicker(colorRect, "", fluidColor)
-
-	// rg.Line(getControlRect(), "Brush Radius")
-	// brushRadius = rg.Spinner(getControlRect(), "", &brushRadius, 0, 5, false)
 }
 
 func getControlRect() r.Rectangle {
