@@ -63,6 +63,7 @@ func main() {
 
 		macFluid.DiffusionRate = diffusionRate
 		macFluid.Viscosity = viscosity
+		macFluid.FadeRate = fadeRate
 		macFluid.Simulate(stepSize)
 
 		r.BeginDrawing()

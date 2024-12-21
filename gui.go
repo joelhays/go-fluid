@@ -10,11 +10,12 @@ import (
 var resetSimulation bool = false
 var showVelocityField bool = false
 var showGrid bool = false
-var brushRadius int32 = 1
+var brushRadius int32 = 2
 var diffusionRate float32 = 0.0000125
 var viscosity float32 = 0.0001
-var force float32 = 5
+var force float32 = 8
 var stepSize float32 = 0.1
+var fadeRate float32 = 0.0025
 var fluidColor r.Color = r.Blue
 var prevRect *r.Rectangle = nil
 var panelRect *r.Rectangle = nil
@@ -48,10 +49,13 @@ func handleGui() {
 	viscosity = rg.Slider(getControlRect(), "", "", viscosity, 0.0, 0.005)
 
 	rg.Line(getControlRect(), fmt.Sprintf("Force - %1.2f", force))
-	force = rg.Slider(getControlRect(), "", "", force, 1, 40)
+	force = rg.Slider(getControlRect(), "", "", force, 1, 30)
 
 	rg.Line(getControlRect(), fmt.Sprintf("Step Size - %1.2f", stepSize))
 	stepSize = rg.Slider(getControlRect(), "", "", stepSize, 0.1, 1)
+
+	rg.Line(getControlRect(), fmt.Sprintf("Fade Rate - %1.4f", fadeRate))
+	fadeRate = rg.Slider(getControlRect(), "", "", fadeRate, 0.0, 0.02)
 
 	rg.Line(getControlRect(), "Fluid Color")
 	colorRect := getControlRect()

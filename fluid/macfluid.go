@@ -18,6 +18,7 @@ type MACFluid struct {
 	yVelocitiesPrev  [][]float32
 	DiffusionRate    float32
 	Viscosity        float32
+	FadeRate         float32
 }
 
 func NewMACFluid(size int) *MACFluid {
@@ -40,6 +41,9 @@ func NewMACFluid(size int) *MACFluid {
 		xVelocitiesPrev:  makeArray2d(),
 		YVelocities:      makeArray2d(),
 		yVelocitiesPrev:  makeArray2d(),
+		DiffusionRate:    0,
+		Viscosity:        0,
+		FadeRate:         0,
 	}
 
 	return fluid
@@ -98,13 +102,25 @@ func (f *MACFluid) simulateVelocity(dt float32) {
 }
 
 func (f *MACFluid) simulateDensity(dt float32) {
-	var diffusionRate float32 = f.DiffusionRate
+	f.fade(dt, f.DensityField, f.FadeRate)
 
 	f.DensityField, f.densityFieldPrev = f.densityFieldPrev, f.DensityField
-	f.diffuse(0, dt, f.DensityField, f.densityFieldPrev, diffusionRate)
+	f.diffuse(0, dt, f.DensityField, f.densityFieldPrev, f.DiffusionRate)
 
 	f.DensityField, f.densityFieldPrev = f.densityFieldPrev, f.DensityField
 	f.advect(0, dt, f.DensityField, f.densityFieldPrev, f.XVelocities, f.YVelocities)
+}
+
+func (f *MACFluid) fade(dt float32, grid [][]float32, fadeRate float32) {
+	for x := 0; x < f.Size+2; x++ {
+		for y := 0; y < f.Size+2; y++ {
+			grid[x][y] -= dt * fadeRate
+			if grid[x][y] < 0 {
+				grid[x][y] = 0
+			}
+		}
+	}
+
 }
 
 func (f *MACFluid) advect(b BoundaryAction, dt float32, grid [][]float32, gridPrev [][]float32, xVelocities, yVelocities [][]float32) {
