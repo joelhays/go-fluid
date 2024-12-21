@@ -54,7 +54,6 @@ func main() {
 	r.SetTargetFPS(120)
 
 	for !r.WindowShouldClose() {
-		// handlePanAndZoom()
 		handleMouseDrag()
 
 		if resetSimulation {
@@ -85,31 +84,6 @@ func main() {
 
 	}
 
-}
-
-func handlePanAndZoom() {
-	mousePosition := r.GetMousePosition()
-	// Get the world point that is under the mouse
-	mouseWorldPos := r.GetScreenToWorld2D(mousePosition, camera)
-
-	if r.IsMouseButtonDown(r.MouseButtonLeft) {
-		camera.Offset.X += r.GetMouseDelta().X
-		camera.Offset.Y += r.GetMouseDelta().Y
-	}
-
-	wheel := r.GetMouseWheelMove()
-	if wheel != 0 {
-		// Set the offset to where the mouse is
-		camera.Offset = mousePosition
-
-		// Set the target to match, so that the camera maps the world space point
-		// under the cursor to the screen space point under the cursor at any zoom
-		camera.Target = mouseWorldPos
-
-		// Zoom increment
-		camera.Zoom += (wheel * cameraZoomIncrement)
-		camera.Zoom = r.Clamp(camera.Zoom, 1.0, 20.0)
-	}
 }
 
 func handleMouseDrag() {
