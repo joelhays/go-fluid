@@ -68,16 +68,10 @@ func (f *MACFluid) Simulate(dt float32) {
 }
 
 func (f *MACFluid) AddDensity(x, y int, val float32) {
-	newVal := f.DensityField[x][y] + val
-	if newVal > 1 {
-		newVal = 1
-	}
-	f.DensityField[x][y] = newVal
+	f.DensityField[x][y] = val
 }
 
 func (f *MACFluid) AddVelocity(x, y int, xval, yval float32) {
-	// f.XVelocities[x][y] += xval
-	// f.YVelocities[x][y] += yval
 	f.XVelocities[x][y] = xval
 	f.YVelocities[x][y] = yval
 }
