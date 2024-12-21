@@ -1,6 +1,12 @@
 package Fluid
 
-// import "fmt"
+type BoundaryAction int
+
+const (
+	CopyXY BoundaryAction = iota
+	ReverseYCopyX
+	ReverseXCopyY
+)
 
 type MACFluid struct {
 	Size             int
@@ -15,30 +21,25 @@ type MACFluid struct {
 }
 
 func NewMACFluid(size int) *MACFluid {
+	// allocate additional space for boundary conditions
 	paddedSize := size + 2
-	densityField := make([][]float32, paddedSize)
-	densityFieldPrev := make([][]float32, paddedSize)
-	xVelocities := make([][]float32, paddedSize)
-	xVelocitiesPrev := make([][]float32, paddedSize)
-	yVelocities := make([][]float32, paddedSize)
-	yVelocitiesPrev := make([][]float32, paddedSize)
-	for i := range paddedSize {
-		densityField[i] = make([]float32, paddedSize)
-		densityFieldPrev[i] = make([]float32, paddedSize)
-		xVelocities[i] = make([]float32, paddedSize)
-		xVelocitiesPrev[i] = make([]float32, paddedSize)
-		yVelocities[i] = make([]float32, paddedSize)
-		yVelocitiesPrev[i] = make([]float32, paddedSize)
+
+	makeArray2d := func() [][]float32 {
+		arr := make([][]float32, paddedSize)
+		for i := range paddedSize {
+			arr[i] = make([]float32, paddedSize)
+		}
+		return arr
 	}
 
 	fluid := &MACFluid{
 		Size:             size,
-		DensityField:     densityField,
-		densityFieldPrev: densityFieldPrev,
-		XVelocities:      xVelocities,
-		xVelocitiesPrev:  xVelocitiesPrev,
-		YVelocities:      yVelocities,
-		yVelocitiesPrev:  yVelocitiesPrev,
+		DensityField:     makeArray2d(),
+		densityFieldPrev: makeArray2d(),
+		XVelocities:      makeArray2d(),
+		xVelocitiesPrev:  makeArray2d(),
+		YVelocities:      makeArray2d(),
+		yVelocitiesPrev:  makeArray2d(),
 	}
 
 	return fluid
@@ -58,19 +59,6 @@ func (f *MACFluid) Reset() {
 }
 
 func (f *MACFluid) Simulate(dt float32) {
-	// for x := range len(f.xVelocitiesPrev) {
-	// 	for y := range len(f.xVelocitiesPrev[x]) {
-	// 		f.xVelocitiesPrev[x][y] = 0.0
-	//
-	// 	}
-	// }
-	// for x := range len(f.yVelocitiesPrev) {
-	// 	for y := range len(f.yVelocitiesPrev[x]) {
-	// 		f.yVelocitiesPrev[x][y] = 0.0
-	//
-	// 	}
-	// }
-
 	f.simulateVelocity(dt)
 	f.simulateDensity(dt)
 }
@@ -119,7 +107,7 @@ func (f *MACFluid) simulateDensity(dt float32) {
 	f.advect(0, dt, f.DensityField, f.densityFieldPrev, f.XVelocities, f.YVelocities)
 }
 
-func (f *MACFluid) advect(b int, dt float32, grid [][]float32, gridPrev [][]float32, xVelocities, yVelocities [][]float32) {
+func (f *MACFluid) advect(b BoundaryAction, dt float32, grid [][]float32, gridPrev [][]float32, xVelocities, yVelocities [][]float32) {
 	for x := 1; x <= f.Size; x++ {
 		for y := 1; y <= f.Size; y++ {
 
@@ -153,7 +141,7 @@ func (f *MACFluid) advect(b int, dt float32, grid [][]float32, gridPrev [][]floa
 	f.setBoundaries(b, grid)
 }
 
-func (f *MACFluid) diffuse(b int, dt float32, grid [][]float32, gridPrev [][]float32, diffusionRate float32) {
+func (f *MACFluid) diffuse(b BoundaryAction, dt float32, grid [][]float32, gridPrev [][]float32, diffusionRate float32) {
 	// diffuse the density field
 	// high density cells diffuse to low density cells
 	var relaxationSteps int = 20
@@ -201,8 +189,8 @@ func (f *MACFluid) project(xVelocities, yVelocities, xVelocitiesPrev, yVelocitie
 			xVelocitiesPrev[x][y] = 0.0
 		}
 	}
-	f.setBoundaries(0, yVelocitiesPrev)
-	f.setBoundaries(0, xVelocitiesPrev)
+	f.setBoundaries(CopyXY, yVelocitiesPrev)
+	f.setBoundaries(CopyXY, xVelocitiesPrev)
 
 	var relaxationSteps int = 20
 	for range relaxationSteps {
@@ -217,7 +205,7 @@ func (f *MACFluid) project(xVelocities, yVelocities, xVelocitiesPrev, yVelocitie
 				xVelocitiesPrev[x][y] = f
 			}
 		}
-		f.setBoundaries(0, xVelocities)
+		f.setBoundaries(CopyXY, xVelocities)
 	}
 
 	for x := 1; x <= f.Size; x++ {
@@ -231,14 +219,14 @@ func (f *MACFluid) project(xVelocities, yVelocities, xVelocitiesPrev, yVelocitie
 			yVelocities[x][y] -= 0.5 * float32(f.Size) * (c - d)
 		}
 	}
-	f.setBoundaries(1, yVelocities)
-	f.setBoundaries(2, xVelocities)
+	f.setBoundaries(ReverseYCopyX, yVelocities)
+	f.setBoundaries(ReverseXCopyY, xVelocities)
 }
 
-func (f *MACFluid) setBoundaries(b int, grid [][]float32) {
+func (f *MACFluid) setBoundaries(b BoundaryAction, grid [][]float32) {
 
 	for i := 1; i <= f.Size; i++ {
-		if b == 1 {
+		if b == ReverseYCopyX {
 			grid[0][i] = -grid[1][i]
 			grid[f.Size+1][i] = -grid[f.Size][i]
 		} else {
@@ -246,7 +234,7 @@ func (f *MACFluid) setBoundaries(b int, grid [][]float32) {
 			grid[f.Size+1][i] = grid[f.Size][i]
 		}
 
-		if b == 2 {
+		if b == ReverseXCopyY {
 			grid[i][0] = -grid[i][1]
 			grid[i][f.Size+1] = -grid[i][f.Size]
 		} else {
