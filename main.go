@@ -131,7 +131,7 @@ func drawGrid() {
 		for y := range macFluid.Size + 1 {
 			startX := int32(x * cellSize)
 			startY := int32(y * cellSize)
-			r.DrawLine(startX, startY, startX+cellSize, startY+0, color)
+			r.DrawLine(startX, startY, startX+cellSize, startY, color)
 			r.DrawLine(startX+cellSize, startY, startX+cellSize, startY+cellSize, color)
 			r.DrawLine(startX+cellSize, startY+cellSize, startX, startY+cellSize, color)
 			r.DrawLine(startX, startY+cellSize, startX, startY, color)
@@ -146,8 +146,8 @@ func drawVelocityField() {
 
 	for x := 1; x <= macFluid.Size; x++ {
 		for y := 1; y <= macFluid.Size; y++ {
-			xv := macFluid.XVelocities[x][y] * halfCellSize
-			yv := macFluid.YVelocities[x][y] * halfCellSize
+			xv := macFluid.XVelocities[x][y] * cellSize
+			yv := macFluid.YVelocities[x][y] * cellSize
 
 			pos := r.NewVector2(float32(x*cellSize+halfCellSize), float32(y*cellSize+halfCellSize))
 			dir := r.NewVector2(xv, yv)

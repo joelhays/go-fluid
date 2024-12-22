@@ -13,7 +13,7 @@ var showGrid bool = false
 var brushRadius int32 = 2
 var diffusionRate float32 = 0.0000125
 var viscosity float32 = 0.0001
-var force float32 = 8
+var force float32 = 10
 var stepSize float32 = 0.1
 var fadeRate float32 = 0.0025
 var fluidColor r.Color = r.Blue
@@ -49,7 +49,7 @@ func handleGui() {
 	viscosity = rg.Slider(getControlRect(), "", "", viscosity, 0.0, 0.005)
 
 	rg.Line(getControlRect(), fmt.Sprintf("Force - %1.2f", force))
-	force = rg.Slider(getControlRect(), "", "", force, 1, 30)
+	force = rg.Slider(getControlRect(), "", "", force, 1, 50)
 
 	rg.Line(getControlRect(), fmt.Sprintf("Step Size - %1.2f", stepSize))
 	stepSize = rg.Slider(getControlRect(), "", "", stepSize, 0.1, 1)

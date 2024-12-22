@@ -3,9 +3,8 @@ package Fluid
 type BoundaryAction int
 
 const (
-	CopyXY BoundaryAction = iota
-	ReverseYCopyX
-	ReverseXCopyY
+	Copy BoundaryAction = iota
+	Reflect
 )
 
 type MACFluid struct {
@@ -199,8 +198,8 @@ func (f *MACFluid) project(xVelocities, yVelocities, xVelocitiesPrev, yVelocitie
 			xVelocitiesPrev[x][y] = 0.0
 		}
 	}
-	f.setBoundaries(CopyXY, yVelocitiesPrev)
-	f.setBoundaries(CopyXY, xVelocitiesPrev)
+	f.setBoundaries(Copy, yVelocitiesPrev)
+	f.setBoundaries(Copy, xVelocitiesPrev)
 
 	var relaxationSteps int = 20
 	for range relaxationSteps {
@@ -215,7 +214,7 @@ func (f *MACFluid) project(xVelocities, yVelocities, xVelocitiesPrev, yVelocitie
 				xVelocitiesPrev[x][y] = f
 			}
 		}
-		f.setBoundaries(CopyXY, xVelocities)
+		f.setBoundaries(Copy, xVelocities)
 	}
 
 	for x := 1; x <= f.Size; x++ {
@@ -229,14 +228,16 @@ func (f *MACFluid) project(xVelocities, yVelocities, xVelocitiesPrev, yVelocitie
 			yVelocities[x][y] -= 0.5 * float32(f.Size) * (c - d)
 		}
 	}
-	f.setBoundaries(ReverseYCopyX, yVelocities)
-	f.setBoundaries(ReverseXCopyY, xVelocities)
+	f.setBoundaries(Reflect, yVelocities)
+	f.setBoundaries(Reflect, xVelocities)
 }
 
 func (f *MACFluid) setBoundaries(b BoundaryAction, grid [][]float32) {
+	// copy or reflect cell values to boundary cells as needed
+	// to ensure the simulation is properly contained
 
 	for i := 1; i <= f.Size; i++ {
-		if b == ReverseYCopyX {
+		if b == Reflect {
 			grid[0][i] = -grid[1][i]
 			grid[f.Size+1][i] = -grid[f.Size][i]
 		} else {
@@ -244,7 +245,7 @@ func (f *MACFluid) setBoundaries(b BoundaryAction, grid [][]float32) {
 			grid[f.Size+1][i] = grid[f.Size][i]
 		}
 
-		if b == ReverseXCopyY {
+		if b == Reflect {
 			grid[i][0] = -grid[i][1]
 			grid[i][f.Size+1] = -grid[i][f.Size]
 		} else {
