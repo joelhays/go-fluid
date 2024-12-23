@@ -3,8 +3,15 @@ package Fluid
 type BoundaryAction int
 
 const (
-	Copy BoundaryAction = iota
-	Reflect
+	CopyBoundary BoundaryAction = iota
+	ReflectBoundary
+)
+
+type SwapStateAction int
+
+const (
+	SwapVelocities SwapStateAction = iota
+	SwapDensities
 )
 
 type MACFluid struct {
@@ -75,33 +82,38 @@ func (f *MACFluid) AddVelocity(x, y int, xval, yval float32) {
 	f.YVelocities[x][y] = yval
 }
 
+func (f *MACFluid) swapState(s SwapStateAction) {
+	switch s {
+	case SwapVelocities:
+		f.XVelocities, f.xVelocitiesPrev = f.xVelocitiesPrev, f.XVelocities
+		f.YVelocities, f.yVelocitiesPrev = f.yVelocitiesPrev, f.YVelocities
+	case SwapDensities:
+		f.DensityField, f.densityFieldPrev = f.densityFieldPrev, f.DensityField
+	}
+}
+
 func (f *MACFluid) simulateVelocity(dt float32) {
 	var viscosity float32 = f.Viscosity
 
-	f.XVelocities, f.xVelocitiesPrev = f.xVelocitiesPrev, f.XVelocities
-	f.diffuse(1, dt, f.XVelocities, f.xVelocitiesPrev, viscosity)
-
-	f.YVelocities, f.yVelocitiesPrev = f.yVelocitiesPrev, f.YVelocities
-	f.diffuse(2, dt, f.YVelocities, f.yVelocitiesPrev, viscosity)
-
+	f.swapState(SwapVelocities)
+	f.diffuse(ReflectBoundary, dt, f.XVelocities, f.xVelocitiesPrev, viscosity)
+	f.diffuse(ReflectBoundary, dt, f.YVelocities, f.yVelocitiesPrev, viscosity)
 	f.project(f.XVelocities, f.YVelocities, f.xVelocitiesPrev, f.yVelocitiesPrev)
 
-	f.XVelocities, f.xVelocitiesPrev = f.xVelocitiesPrev, f.XVelocities
-	f.YVelocities, f.yVelocitiesPrev = f.yVelocitiesPrev, f.YVelocities
-
-	f.advect(1, dt, f.XVelocities, f.xVelocitiesPrev, f.xVelocitiesPrev, f.yVelocitiesPrev)
-	f.advect(2, dt, f.YVelocities, f.yVelocitiesPrev, f.xVelocitiesPrev, f.yVelocitiesPrev)
+	f.swapState(SwapVelocities)
+	f.advect(ReflectBoundary, dt, f.XVelocities, f.xVelocitiesPrev, f.xVelocitiesPrev, f.yVelocitiesPrev)
+	f.advect(ReflectBoundary, dt, f.YVelocities, f.yVelocitiesPrev, f.xVelocitiesPrev, f.yVelocitiesPrev)
 	f.project(f.XVelocities, f.YVelocities, f.xVelocitiesPrev, f.yVelocitiesPrev)
 }
 
 func (f *MACFluid) simulateDensity(dt float32) {
 	f.fade(dt, f.DensityField, f.FadeRate)
 
-	f.DensityField, f.densityFieldPrev = f.densityFieldPrev, f.DensityField
-	f.diffuse(0, dt, f.DensityField, f.densityFieldPrev, f.DiffusionRate)
+	f.swapState(SwapDensities)
+	f.diffuse(CopyBoundary, dt, f.DensityField, f.densityFieldPrev, f.DiffusionRate)
 
-	f.DensityField, f.densityFieldPrev = f.densityFieldPrev, f.DensityField
-	f.advect(0, dt, f.DensityField, f.densityFieldPrev, f.XVelocities, f.YVelocities)
+	f.swapState(SwapDensities)
+	f.advect(CopyBoundary, dt, f.DensityField, f.densityFieldPrev, f.XVelocities, f.YVelocities)
 }
 
 func (f *MACFluid) fade(dt float32, grid [][]float32, fadeRate float32) {
@@ -173,10 +185,6 @@ func (f *MACFluid) diffuse(b BoundaryAction, dt float32, grid [][]float32, gridP
 				var numNeighbors float32 = 4.0
 
 				diffusedValue := (self + sumOfNeighborValues*diffusionFactor) / (1 + numNeighbors*diffusionFactor)
-				// if diffusedValue > 40 {
-				// 	fmt.Println("diffusedValue", diffusedValue)
-				// 	diffusedValue = 40
-				// }
 				grid[x][y] = diffusedValue
 			}
 		}
@@ -198,8 +206,8 @@ func (f *MACFluid) project(xVelocities, yVelocities, xVelocitiesPrev, yVelocitie
 			xVelocitiesPrev[x][y] = 0.0
 		}
 	}
-	f.setBoundaries(Copy, yVelocitiesPrev)
-	f.setBoundaries(Copy, xVelocitiesPrev)
+	f.setBoundaries(CopyBoundary, yVelocitiesPrev)
+	f.setBoundaries(CopyBoundary, xVelocitiesPrev)
 
 	var relaxationSteps int = 20
 	for range relaxationSteps {
@@ -214,7 +222,7 @@ func (f *MACFluid) project(xVelocities, yVelocities, xVelocitiesPrev, yVelocitie
 				xVelocitiesPrev[x][y] = f
 			}
 		}
-		f.setBoundaries(Copy, xVelocities)
+		f.setBoundaries(CopyBoundary, xVelocities)
 	}
 
 	for x := 1; x <= f.Size; x++ {
@@ -228,8 +236,8 @@ func (f *MACFluid) project(xVelocities, yVelocities, xVelocitiesPrev, yVelocitie
 			yVelocities[x][y] -= 0.5 * float32(f.Size) * (c - d)
 		}
 	}
-	f.setBoundaries(Reflect, yVelocities)
-	f.setBoundaries(Reflect, xVelocities)
+	f.setBoundaries(ReflectBoundary, yVelocities)
+	f.setBoundaries(ReflectBoundary, xVelocities)
 }
 
 func (f *MACFluid) setBoundaries(b BoundaryAction, grid [][]float32) {
@@ -237,7 +245,7 @@ func (f *MACFluid) setBoundaries(b BoundaryAction, grid [][]float32) {
 	// to ensure the simulation is properly contained
 
 	for i := 1; i <= f.Size; i++ {
-		if b == Reflect {
+		if b == ReflectBoundary {
 			grid[0][i] = -grid[1][i]
 			grid[f.Size+1][i] = -grid[f.Size][i]
 		} else {
@@ -245,7 +253,7 @@ func (f *MACFluid) setBoundaries(b BoundaryAction, grid [][]float32) {
 			grid[f.Size+1][i] = grid[f.Size][i]
 		}
 
-		if b == Reflect {
+		if b == ReflectBoundary {
 			grid[i][0] = -grid[i][1]
 			grid[i][f.Size+1] = -grid[i][f.Size]
 		} else {
