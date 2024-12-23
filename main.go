@@ -172,6 +172,15 @@ func drawVelocityField() {
 }
 
 func drawDensityField() {
+	baseColor := r.ColorToHSV(gui.FluidColor)
+
+	createColor := func(hueOffset, valueOffset float32) r.Color {
+		// hue 0-360, saturation 0-1, value 0-1
+		hue := float32(math.Mod(float64(baseColor.X+hueOffset), 360))
+		value := baseColor.Z * valueOffset
+		return r.ColorFromHSV(hue, baseColor.Y, value)
+	}
+
 	for x := range macFluid.Size + 1 {
 		for y := range macFluid.Size + 1 {
 			density := macFluid.DensityField[x][y]
@@ -181,21 +190,19 @@ func drawDensityField() {
 
 			var vel, vel1, vel2, vel3 float32 = 0, 0, 0, 0
 			if gui.ColorizeTurbulence {
-				vel = (macFluid.XVelocities[x][y] + macFluid.YVelocities[x][y]) * 2
-				vel1 = (macFluid.XVelocities[x+1][y] + macFluid.YVelocities[x+1][y]) * 2
-				vel2 = (macFluid.XVelocities[x][y+1] + macFluid.YVelocities[x][y+1]) * 2
-				vel3 = (macFluid.XVelocities[x+1][y+1] + macFluid.YVelocities[x+1][y+1]) * 2
+				vel = (macFluid.XVelocities[x][y] + macFluid.YVelocities[x][y]) * 4
+				vel1 = (macFluid.XVelocities[x+1][y] + macFluid.YVelocities[x+1][y]) * 4
+				vel2 = (macFluid.XVelocities[x][y+1] + macFluid.YVelocities[x][y+1]) * 4
+				vel3 = (macFluid.XVelocities[x+1][y+1] + macFluid.YVelocities[x+1][y+1]) * 4
 			}
+
+			topLeftColor := createColor(vel, density)
+			bottomLeftColor := createColor(vel2, density2)
+			topRightColor := createColor(vel3, density3)
+			bottomRightColor := createColor(vel1, density1)
 
 			pos := r.NewVector2(float32(x*cellSize), float32(y*cellSize))
 			size := r.NewVector2(cellSize, cellSize)
-
-			// hue 0-360, value 0-1
-			baseColor := r.ColorToHSV(gui.FluidColor)
-			topLeftColor := r.ColorFromHSV(float32(math.Mod(float64(baseColor.X+vel), 360)), baseColor.Y, baseColor.Z*density)
-			bottomLeftColor := r.ColorFromHSV(float32(math.Mod(float64(baseColor.X+vel2), 360)), baseColor.Y, baseColor.Z*density2)
-			topRightColor := r.ColorFromHSV(float32(math.Mod(float64(baseColor.X+vel3), 360)), baseColor.Y, baseColor.Z*density3)
-			bottomRightColor := r.ColorFromHSV(float32(math.Mod(float64(baseColor.X+vel1), 360)), baseColor.Y, baseColor.Z*density1)
 
 			r.DrawRectangleGradientEx(r.Rectangle{
 				X:      pos.X,
