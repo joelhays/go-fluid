@@ -10,9 +10,11 @@ import (
 
 	r "github.com/gen2brain/raylib-go/raylib"
 	f "github.com/joelhays/go-fluid/fluid"
+	g "github.com/joelhays/go-fluid/gui"
 )
 
 const windowWidth, windowHeight = 1024, 1024
+const guiWidth = 200
 const cellSize = 16
 const halfCellSize = cellSize / 2
 const gridWidth = windowWidth / cellSize
@@ -22,6 +24,7 @@ const cameraZoomIncrement float32 = 0.125
 
 // render state
 var camera = r.Camera2D{Zoom: 1.0}
+var gui = g.NewGui(windowWidth, windowHeight, guiWidth)
 
 // simulation state
 var macFluid *f.MACFluid
@@ -48,7 +51,7 @@ func main() {
 		defer runtime.UnlockOSThread()
 	}
 
-	r.InitWindow(windowWidth+200, windowHeight, "Golang Fluid Simulation")
+	r.InitWindow(windowWidth+guiWidth, windowHeight, "Golang Fluid Simulation")
 	defer r.CloseWindow()
 
 	r.SetTargetFPS(120)
@@ -56,14 +59,15 @@ func main() {
 	for !r.WindowShouldClose() {
 		handleMouseDrag()
 
-		if resetSimulation {
+		if gui.ResetSimulation {
 			macFluid.Reset()
 		}
 
-		macFluid.DiffusionRate = diffusionRate
-		macFluid.Viscosity = viscosity
-		macFluid.FadeRate = fadeRate
-		macFluid.Simulate(stepSize)
+		macFluid.DiffusionRate = gui.DiffusionRate
+		macFluid.Viscosity = gui.Viscosity
+		macFluid.FadeRate = gui.FadeRate
+
+		macFluid.Simulate(gui.StepSize)
 
 		r.BeginDrawing()
 		{
@@ -78,10 +82,9 @@ func main() {
 
 			r.DrawFPS(0, 0)
 
-			handleGui()
+			gui.Run()
 		}
 		r.EndDrawing()
-
 	}
 
 }
@@ -102,11 +105,13 @@ func handleMouseDrag() {
 	}
 
 	if r.IsMouseButtonDown(r.MouseButtonRight) || r.IsKeyDown(r.KeyLeftSuper) {
+		force := gui.Force
 		val := r.Vector2ClampValue(mouseDelta, -halfCellSize, halfCellSize)
 		macFluid.AddVelocity(x, y, val.X*force, val.Y*force)
 	}
 	if r.IsMouseButtonDown(r.MouseButtonLeft) {
 		macFluid.AddDensity(x, y, 1)
+		brushRadius := gui.BrushRadius
 		for x1 := x - int(brushRadius); x1 <= x+int(brushRadius); x1++ {
 			for y1 := y - int(brushRadius); y1 <= y+int(brushRadius); y1++ {
 				if int(x) == int(x1) && int(y) == int(y1) {
@@ -115,14 +120,21 @@ func handleMouseDrag() {
 				if int(x1) < 1 || x1 > macFluid.Size || y1 < 1 || y1 > macFluid.Size {
 					continue
 				}
-				macFluid.AddDensity(int(x1), int(y1), 1)
+
+				brushCenter := r.Vector2{X: float32(x), Y: float32(y)}
+				brushPoint := r.Vector2{X: float32(x1), Y: float32(y1)}
+				brushRadius := float32(gui.BrushRadius) + 0.5
+
+				if r.CheckCollisionPointCircle(brushPoint, brushCenter, brushRadius) {
+					macFluid.AddDensity(int(x1), int(y1), 1)
+				}
 			}
 		}
 	}
 }
 
 func drawGrid() {
-	if showGrid == false {
+	if gui.ShowGrid == false {
 		return
 	}
 
@@ -140,7 +152,7 @@ func drawGrid() {
 }
 
 func drawVelocityField() {
-	if showVelocityField == false {
+	if gui.ShowVelocityField == false {
 		return
 	}
 
@@ -169,7 +181,7 @@ func drawDensityField() {
 			pos := r.NewVector2(float32(x*cellSize), float32(y*cellSize))
 			size := r.NewVector2(cellSize, cellSize)
 
-			baseColor := r.ColorToHSV(fluidColor)
+			baseColor := r.ColorToHSV(gui.FluidColor)
 			topLeftColor := r.ColorFromHSV(baseColor.X, baseColor.Y, baseColor.Z*density)
 			bottomLeftColor := r.ColorFromHSV(baseColor.X, baseColor.Y, baseColor.Z*density2)
 			topRightColor := r.ColorFromHSV(baseColor.X, baseColor.Y, baseColor.Z*density3)
