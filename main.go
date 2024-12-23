@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"runtime"
 	"runtime/pprof"
@@ -178,14 +179,23 @@ func drawDensityField() {
 			density2 := macFluid.DensityField[x][y+1]
 			density3 := macFluid.DensityField[x+1][y+1]
 
+			var vel, vel1, vel2, vel3 float32 = 0, 0, 0, 0
+			if gui.ColorizeTurbulence {
+				vel = (macFluid.XVelocities[x][y] + macFluid.YVelocities[x][y]) * 2
+				vel1 = (macFluid.XVelocities[x+1][y] + macFluid.YVelocities[x+1][y]) * 2
+				vel2 = (macFluid.XVelocities[x][y+1] + macFluid.YVelocities[x][y+1]) * 2
+				vel3 = (macFluid.XVelocities[x+1][y+1] + macFluid.YVelocities[x+1][y+1]) * 2
+			}
+
 			pos := r.NewVector2(float32(x*cellSize), float32(y*cellSize))
 			size := r.NewVector2(cellSize, cellSize)
 
+			// hue 0-360, value 0-1
 			baseColor := r.ColorToHSV(gui.FluidColor)
-			topLeftColor := r.ColorFromHSV(baseColor.X, baseColor.Y, baseColor.Z*density)
-			bottomLeftColor := r.ColorFromHSV(baseColor.X, baseColor.Y, baseColor.Z*density2)
-			topRightColor := r.ColorFromHSV(baseColor.X, baseColor.Y, baseColor.Z*density3)
-			bottomRightColor := r.ColorFromHSV(baseColor.X, baseColor.Y, baseColor.Z*density1)
+			topLeftColor := r.ColorFromHSV(float32(math.Mod(float64(baseColor.X+vel), 360)), baseColor.Y, baseColor.Z*density)
+			bottomLeftColor := r.ColorFromHSV(float32(math.Mod(float64(baseColor.X+vel2), 360)), baseColor.Y, baseColor.Z*density2)
+			topRightColor := r.ColorFromHSV(float32(math.Mod(float64(baseColor.X+vel3), 360)), baseColor.Y, baseColor.Z*density3)
+			bottomRightColor := r.ColorFromHSV(float32(math.Mod(float64(baseColor.X+vel1), 360)), baseColor.Y, baseColor.Z*density1)
 
 			r.DrawRectangleGradientEx(r.Rectangle{
 				X:      pos.X,

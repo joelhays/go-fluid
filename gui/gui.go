@@ -9,16 +9,17 @@ import (
 
 type Gui struct {
 	// control state
-	ResetSimulation   bool
-	ShowVelocityField bool
-	ShowGrid          bool
-	BrushRadius       int32
-	DiffusionRate     float32
-	Viscosity         float32
-	Force             float32
-	StepSize          float32
-	FadeRate          float32
-	FluidColor        r.Color
+	ResetSimulation    bool
+	ShowVelocityField  bool
+	ShowGrid           bool
+	BrushRadius        int32
+	DiffusionRate      float32
+	Viscosity          float32
+	Force              float32
+	StepSize           float32
+	FadeRate           float32
+	FluidColor         r.Color
+	ColorizeTurbulence bool
 
 	// internal state
 	windowHeight float32
@@ -30,16 +31,17 @@ type Gui struct {
 
 func NewGui(windowWidth, windowHeight, panelWidth int) *Gui {
 	return &Gui{
-		ResetSimulation:   false,
-		ShowVelocityField: false,
-		ShowGrid:          false,
-		BrushRadius:       2,
-		DiffusionRate:     0.0000125,
-		Viscosity:         0.0001,
-		Force:             10,
-		StepSize:          0.1,
-		FadeRate:          0.0025,
-		FluidColor:        r.Blue,
+		ResetSimulation:    false,
+		ShowVelocityField:  false,
+		ShowGrid:           false,
+		BrushRadius:        2,
+		DiffusionRate:      0.0000125,
+		Viscosity:          0.0001,
+		Force:              15,
+		StepSize:           0.1,
+		FadeRate:           0.0025,
+		FluidColor:         r.Blue,
+		ColorizeTurbulence: true,
 
 		windowHeight: float32(windowHeight),
 		windowWidth:  float32(windowWidth),
@@ -90,6 +92,9 @@ func (g *Gui) Run() {
 	g.prevRect.Y += 30
 
 	g.FluidColor = rg.ColorPicker(colorRect, "", g.FluidColor)
+
+	rg.Line(g.getControlRect(), "Colorize Turbulence")
+	g.ColorizeTurbulence = rg.CheckBox(g.getControlRect(), "", g.ColorizeTurbulence)
 }
 
 func (g *Gui) getControlRect() r.Rectangle {
