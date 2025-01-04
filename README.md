@@ -15,8 +15,9 @@ incompressible fluid system using the staggered Marker-and-Cell Grid data
 structure.
 
 ## Screenshots 
-![01](/screenshots/DensityField.png "01")
-![02](/screenshots/VelocityField.png "02")
+![Fluid Animation](/screenshots/Fluid.gif "Fluid Animation")
+![Density Field Screenshot](/screenshots/DensityField.png "Density Field Screenshot")
+![Velocity Field Screenshot](/screenshots/VelocityField.png "Velocity Field Screenshot")
 
 ## Getting Started
 
